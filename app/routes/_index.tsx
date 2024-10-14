@@ -1,4 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
+import { useLoaderData, Link } from "@remix-run/react";
+import { db as prisma } from "~/db.server";
 
 export const meta: MetaFunction = () => {
   return [
@@ -7,7 +9,17 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+export const loader = async () => {
+  const users = await prisma.user.findMany({
+    take: 5,
+    orderBy: { createdAt: 'desc' },
+  });
+  return { users };
+};
+
 export default function Index() {
+  const { users } = useLoaderData<typeof loader>();
+
   return (
     <div className="flex h-screen items-center justify-center">
       <div className="flex flex-col items-center gap-16">
@@ -28,26 +40,38 @@ export default function Index() {
             />
           </div>
         </header>
-        <nav className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-gray-200 p-6 dark:border-gray-700">
-          <p className="leading-6 text-gray-700 dark:text-gray-200">
-            What&apos;s next?
-          </p>
-          <ul>
-            {resources.map(({ href, text, icon }) => (
-              <li key={href}>
-                <a
-                  className="group flex items-center gap-3 self-stretch p-3 leading-normal text-blue-700 hover:underline dark:text-blue-500"
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {icon}
-                  {text}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <div className="flex gap-4">
+          <nav className="flex flex-col items-center justify-start gap-4 rounded-3xl border border-gray-200 p-6 dark:border-gray-700 w-64">
+            <p className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-1">
+              What&apos;s next?
+            </p>
+            <ul className="w-full">
+              {resources.map(({ href, text, icon }) => (
+                <li key={href}>
+                  <Link
+                    to={href}
+                    className="group flex items-center gap-3 self-stretch p-3 leading-normal text-blue-700 hover:underline dark:text-blue-500"
+                  >
+                    {icon}
+                    {text}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div className="flex flex-col items-center justify-start gap-4 rounded-3xl border border-gray-200 p-6 dark:border-gray-700 w-64">
+            <p className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-1">
+              Chats
+            </p>
+            <ul className="w-full">
+              {users.map((user) => (
+                <li key={user.id} className="p-3 gap-3 text-blue-700 hover:underline dark:text-blue-500">
+                  <Link to={`/users/${user.id}`}>{user.name}&apos;s chats</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );
